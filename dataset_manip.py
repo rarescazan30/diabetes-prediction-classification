@@ -1,13 +1,13 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import StandardScaler
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder, StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from imblearn.over_sampling import SMOTE 
+
 # folosesc smote pentru ca am foarte putini diabetici in dataset
 # am nevoie ca modelul meu sa fie mai atent la datele diabetice, nu doar la cele sanatoase
 
@@ -65,7 +65,8 @@ df_encoded['physical_activity'] = np.where(df_encoded['diabetes'] == 1, np.rando
 df_encoded['physical_activity'] += np.random.randint(-10, 10, size=len(df_encoded))
 # totusi oamenii care sunt mai tineri fac mai mult sport, deci pot modifica putin datele ca sa fie mai realiste
 df_encoded['physical_activity'] += np.where(df_encoded['age'] > 40, np.random.randint(-20, 10, size = len(df_encoded)), np.random.randint(10,30, size = len(df_encoded)))
-
+df_encoded['physical_activity'] = np.where(df_encoded['physical_activity'] < 0, 0, df_encoded['physical_activity'])
+df_encoded['physical_activity'] = np.where(df_encoded['physical_activity'] > 100, 100, df_encoded['physical_activity'])
 df_data = df_encoded.drop('diabetes', axis=1)
 df_target = df_encoded['diabetes'] 
 
@@ -76,27 +77,7 @@ smote = SMOTE(random_state=42)
 
 X_train, y_train = smote.fit_resample(X_train, y_train)
 
-# normalizez datele
-scaler = MinMaxScaler()
-X_train[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']] = scaler.fit_transform(X_train[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']])
-X_test[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']] = scaler.transform(X_test[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']])
-
-model = KNeighborsClassifier(n_neighbors=5)
-model.fit(X_train, y_train)
-
-y_pred = model.predict(X_test)
-
-accuracy = accuracy_score(y_test, y_pred)
-print(f"Acuratețea modelului: {accuracy:.2f}")
-
-print("Raport de clasificare:")
-print(classification_report(y_test, y_pred))
-
-print("\nMatrice de confuzie:")
-print(confusion_matrix(y_test, y_pred))
-
-
-# exportez seturile de train si de test
+# exportez seturile de train si de test inainte sa le normalizez
 
 # intai le concatenez
 
@@ -108,4 +89,47 @@ test_set = pd.concat([X_test, y_test], axis=1)
 train_set.to_csv('manipulated_train_data.csv', index=False)
 test_set.to_csv('manipulated_test_data.csv', index=False)
 
+
+
+
+# normalizez datele
+scaler = MinMaxScaler()
+X_train[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']] = scaler.fit_transform(X_train[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']])
+X_test[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']] = scaler.transform(X_test[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']])
+
+# antrenez 
+model = KNeighborsClassifier(n_neighbors=5)
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Acuratețea modelului: {accuracy:.2f}")
+
+print("Raport de clasificare:")
+print(classification_report(y_test, y_pred))
+
+# creez matricea de confuzie si o salvez
+cm = confusion_matrix(y_test, y_pred)
+plt.figure(figsize=(6,5))
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+plt.title('Matrice de confuzie')
+plt.xlabel('Predicții')
+plt.ylabel('Valori reale')
+plt.tight_layout()
+plt.savefig('matrice_confuzie.png', dpi=300)
+plt.show()
+
+# analiza erorilor
+errors_cols = ['age', 'bmi', 'HbA1c_level', 'blood_glucose_level', 'physical_activity']
+
+errors = (y_test != y_pred)
+for col in errors_cols:
+    plt.figure(figsize=(6,4))
+    sns.histplot(X_test.loc[errors, col], color='red', label='Greșit clasificat', kde=True)
+    sns.histplot(X_test.loc[~errors, col], color='green', label='Corect clasificat', kde=True)
+    plt.legend()
+    plt.title(f'Distribuția {col} pentru predicții corecte vs greșite')
+    plt.savefig(f'error_analysis_{col}.png', dpi=300)
+    plt.show()
 
