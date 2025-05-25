@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 train_df = pd.read_csv('train.csv')
-test_df = pd.read_csv('test_data.csv')
+test_df = pd.read_csv('test.csv')
 
 print(train_df.describe())
 print(train_df.isnull().sum())

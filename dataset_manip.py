@@ -68,6 +68,9 @@ df_encoded['physical_activity'] += np.random.randint(-10, 10, size=len(df_encode
 df_encoded['physical_activity'] += np.where(df_encoded['age'] > 40, np.random.randint(-20, 10, size = len(df_encoded)), np.random.randint(10,30, size = len(df_encoded)))
 df_encoded['physical_activity'] = np.where(df_encoded['physical_activity'] < 0, 0, df_encoded['physical_activity'])
 df_encoded['physical_activity'] = np.where(df_encoded['physical_activity'] > 100, 100, df_encoded['physical_activity'])
+
+# analizand boxplot-urile pentru outliers, am realizat ca am multe date cu bmi > 60, care reprezinta, probabil, erori
+df_encoded = df_encoded[df_encoded['bmi'] < 60]
 df_data = df_encoded.drop('diabetes', axis=1)
 df_target = df_encoded['diabetes'] 
 
@@ -107,6 +110,11 @@ joblib.dump(model, 'model_antrenat_clasificare.pkl')
 
 y_pred = model.predict(X_test)
 
+# afisez acuratetea modelului si raportul de clasificare
+
+accuracy = accuracy_score(y_test, y_pred)
+print(f"Acuratețea modelului este: {accuracy:.2f}")
+print(classification_report(y_test, y_pred))
 if choice == 1:
     # creez matricea de confuzie si o salvez
     cm = confusion_matrix(y_test, y_pred)
