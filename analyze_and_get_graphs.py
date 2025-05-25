@@ -4,8 +4,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 
-train_df = pd.read_csv('manipulated_train_data.csv')
-test_df = pd.read_csv('manipulated_test_data.csv')
+train_df = pd.read_csv('train.csv')
+test_df = pd.read_csv('test_data.csv')
 
 print(train_df.describe())
 print(train_df.isnull().sum())

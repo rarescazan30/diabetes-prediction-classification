@@ -7,11 +7,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
 from imblearn.over_sampling import SMOTE 
-
+import joblib
 # folosesc smote pentru ca am foarte putini diabetici in dataset
 # am nevoie ca modelul meu sa fie mai atent la datele diabetice, nu doar la cele sanatoase
 
-
+# incarc datele din csv, aici am presupus ca datele sunt in acelasi folder cu sursele mele
 csv_path = 'diabetes_prediction_dataset.csv'
 
 encoder = LabelEncoder()
@@ -26,6 +26,7 @@ no_info_count = (df['smoking_history'] == 'No Info').sum()
 no_info = (df['smoking_history'] == 'No Info').mean() * 100
 print(f"Valori 'No Info' în smoking_history: {no_info_count} ({no_info:.2f}%)")
 
+choice = input("Vrei sa generezi si graficele pentru matricea de confuzie etc? Scrie 1 pentru Da, 0 pentru Nu: ")
 
 # am No Info la unele valori in smoking_history, vreau sa le inlocuiesc cu cea mai comuna alegere
 
@@ -85,9 +86,9 @@ train_set = pd.concat([X_train, y_train], axis=1)
 test_set = pd.concat([X_test, y_test], axis=1)
 
 # le salvez in format csv
-
-train_set.to_csv('manipulated_train_data.csv', index=False)
-test_set.to_csv('manipulated_test_data.csv', index=False)
+print('Am salvat datele de train si de test in format csv')
+train_set.to_csv('train.csv', index=False)
+test_set.to_csv('test.csv', index=False)
 
 
 
@@ -100,36 +101,34 @@ X_test[['age', 'HbA1c_level', 'blood_glucose_level', 'bmi', 'physical_activity']
 # antrenez 
 model = KNeighborsClassifier(n_neighbors=5)
 model.fit(X_train, y_train)
+# salvez modelul si scaler-ul pentru a le folosi in interfata grafica
+joblib.dump(scaler, 'scaler_model.pkl')
+joblib.dump(model, 'model_antrenat_clasificare.pkl')
 
 y_pred = model.predict(X_test)
 
-accuracy = accuracy_score(y_test, y_pred)
-print(f"Acuratețea modelului: {accuracy:.2f}")
-
-print("Raport de clasificare:")
-print(classification_report(y_test, y_pred))
-
-# creez matricea de confuzie si o salvez
-cm = confusion_matrix(y_test, y_pred)
-plt.figure(figsize=(6,5))
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
-plt.title('Matrice de confuzie')
-plt.xlabel('Predicții')
-plt.ylabel('Valori reale')
-plt.tight_layout()
-plt.savefig('matrice_confuzie.png', dpi=300)
-plt.show()
-
-# analiza erorilor
-errors_cols = ['age', 'bmi', 'HbA1c_level', 'blood_glucose_level', 'physical_activity']
-
-errors = (y_test != y_pred)
-for col in errors_cols:
-    plt.figure(figsize=(6,4))
-    sns.histplot(X_test.loc[errors, col], color='red', label='Greșit clasificat', kde=True)
-    sns.histplot(X_test.loc[~errors, col], color='green', label='Corect clasificat', kde=True)
-    plt.legend()
-    plt.title(f'Distribuția {col} pentru predicții corecte vs greșite')
-    plt.savefig(f'error_analysis_{col}.png', dpi=300)
+if choice == 1:
+    # creez matricea de confuzie si o salvez
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(6,5))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
+    plt.title('Matrice de confuzie')
+    plt.xlabel('Predicții')
+    plt.ylabel('Valori reale')
+    plt.tight_layout()
+    plt.savefig('matrice_confuzie.png', dpi=300)
     plt.show()
+
+    # analiza erorilor
+    errors_cols = ['age', 'bmi', 'HbA1c_level', 'blood_glucose_level', 'physical_activity']
+
+    errors = (y_test != y_pred)
+    for col in errors_cols:
+        plt.figure(figsize=(6,4))
+        sns.histplot(X_test.loc[errors, col], color='red', label='Greșit clasificat', kde=True)
+        sns.histplot(X_test.loc[~errors, col], color='green', label='Corect clasificat', kde=True)
+        plt.legend()
+        plt.title(f'Distribuția {col} pentru predicții corecte vs greșite')
+        plt.savefig(f'error_analysis_{col}.png', dpi=300)
+        plt.show()
 
