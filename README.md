@@ -1,4 +1,3 @@
----
 
 **Diabetes Classification Model**
 
@@ -10,7 +9,6 @@ Additional features were engineered to enhance model performance, including age 
 
 The smoking history data, originally represented as strings, was converted using one-hot encoding (via the `get_dummies` function), categorizing patients into: never smoked, formerly smoked, does not currently smoke, and currently smokes.
 
----
 
 **Exploratory Data Analysis**
 
@@ -65,7 +63,6 @@ HbA1c levels also display a strong positive correlation with diabetes, as observ
 
 As expected, individuals with higher levels of physical activity are less likely to have diabetes. This inverse relationship aligns with how the feature was constructed.
 
----
 
 **Model Training and Evaluation**
 
@@ -87,7 +84,6 @@ The confusion matrix shows that the model more frequently misclassifies diabetes
 | Macro Avg    | 0.90      | 0.94   | 0.92     | 19,977  |
 | Weighted Avg | 0.98      | 0.97   | 0.97     | 19,977  |
 
----
 
 **Error Analysis**
 
@@ -95,10 +91,8 @@ The model demonstrates difficulty classifying common values of glucose, HbA1c, a
 
 In the case of age, the engineered physical activity feature may have inadvertently biased the model toward predicting no diabetes in younger individuals. This influence lacks a strong scientific basis and reflects the trade-offs of feature engineering.
 
----
 
 **Conclusion**
 
 The model achieves a high overall accuracy (97%) in predicting diabetes. However, it underperforms when identifying positive cases, reflected in the lower precision for diabetes diagnoses. The performance reflects both the quality of the dataset and the influence of engineered features, such as `is_obese` and `physical_activity`. These additional features improve model performance but may introduce biases if not carefully validated.
 
----
